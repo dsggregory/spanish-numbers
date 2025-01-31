@@ -15,12 +15,13 @@ const beepB64 = `UklGRlh/AABXQVZFZm10IBAAAAABAAIAgLsAAADuAgAEABAAZGF0YTR/AACG/4f
 
 var beep []byte
 
+// NewPlayer creates an instance of the audio player. This may only be called one time bc of the oto context.
 func NewPlayer() (*oto.Context, error) {
 	// Prepare an Oto context (this will use your default audio device) that will
 	// play all our sounds. Its configuration can't be changed later.
 	op := &oto.NewContextOptions{
 		SampleRate:   44100,
-		ChannelCount: 1,
+		ChannelCount: 1, // mono
 		Format:       oto.FormatSignedInt16LE,
 	}
 
@@ -35,20 +36,22 @@ func NewPlayer() (*oto.Context, error) {
 	// UNUSED make ready the error beep
 	beep, err = base64.StdEncoding.DecodeString(beepB64)
 	if err != nil {
-		return nil, fmt.Errorf("base64.StdEncoding.DecodeString: %w", err)
+		return nil, fmt.Errorf("base64 beep: %w", err)
 	}
 
 	return otoCtx, nil
 }
 
+// Beep ring the terminal bell
 func (c *LangPractice) Beep() {
 	_, _ = io.WriteString(os.Stderr, "\a") // terminal bell
 }
 
+// Play the mp3 from the reader stream. Playback is asynchronous.
 func (c *LangPractice) Play(rdr io.Reader) error {
 	decodedMp3, err := mp3.NewDecoder(rdr)
 	if err != nil {
-		return fmt.Errorf("could not decode langpractice: %w", err)
+		return fmt.Errorf("could not decode mp3: %w", err)
 	}
 
 	// Create a new 'player' that will handle our sound. Paused by default.
@@ -60,7 +63,15 @@ func (c *LangPractice) Play(rdr io.Reader) error {
 	// We can wait for the sound to finish playing using something like this
 	ticker := time.NewTicker(c.PlayTimeout)
 	done := make(chan error)
+	async := true
 	go func() {
+		defer func() {
+			close(done)
+			ticker.Stop()
+			if async {
+				_ = player.Close() // async
+			}
+		}()
 		for {
 			select {
 			case <-ticker.C:
@@ -75,8 +86,11 @@ func (c *LangPractice) Play(rdr io.Reader) error {
 			}
 		}
 	}()
-	playerr := <-done
-
-	_ = player.Close()
-	return playerr
+	if !async {
+		playerr := <-done // wait on play to finish
+		_ = player.Close()
+		return playerr
+	} else {
+		return nil
+	}
 }

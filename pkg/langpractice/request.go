@@ -47,7 +47,7 @@ func NewClient(min, max int) *LangPractice {
 	// Create custom Transport with TLS configuration
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: false, // Set to true if self-signed certificates are used (not recommended)
+			InsecureSkipVerify: false,
 		},
 	}
 
