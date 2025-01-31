@@ -15,7 +15,8 @@ Usage:
         no auto next number
 ```
 
-The following keys are used while playing the game.
+The following keys are used while playing the game. If an invalid digit is pressed the terminal bell rings. When the final correct digit is entered, the answer is submitted.
+
 ```shell
 Legend:
   r: replay
