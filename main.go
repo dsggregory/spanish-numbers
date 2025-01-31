@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const prompt = "> "
+
 func main() {
 	var min, max = 100, 1000
 	var autoNext bool
@@ -30,6 +32,8 @@ func main() {
 	}
 	defer kpr.Reset()
 
+	printLegend(nil)
+
 loop:
 	for {
 		var answer []byte
@@ -49,6 +53,7 @@ loop:
 		nstr := fmt.Sprintf("%d", resp.Number)
 
 		begin = time.Now()
+		fmt.Printf("%s", prompt)
 
 	answerloop:
 		for {
@@ -64,14 +69,21 @@ loop:
 					}
 				case 'q':
 					// upstream keypress will send a cancel()
-				case 'n':
+				case 'n', 'x':
 					// show answer and skip to next
 					fmt.Printf("!x! \"%d\"", resp.Number)
 					break answerloop
+				case '?':
+					// hint
+					fmt.Printf("!?! \"%s\"\n%s", resp.Target.Written, prompt)
 				default:
 					if b >= byte('0') && b <= byte('9') {
+						l := len(answer)
+						if l == 0 {
+							begin = time.Now() // start timer after first number keypress
+						}
 						// incorrect digit in this spot
-						if nstr[len(answer)] != b {
+						if nstr[l] != b {
 							c.Beep()
 							continue
 						}
@@ -83,7 +95,7 @@ loop:
 							break answerloop
 						}
 					} else {
-						fmt.Printf("\nLegend:\n  r: replay\n  q: quit\n  n: next number\n  0-9: digit\n%s", answer)
+						printLegend(answer)
 					}
 				}
 			}
@@ -101,5 +113,20 @@ loop:
 				break loop
 			}
 		}
+	}
+}
+
+func printLegend(curAnswer []byte) {
+	fmt.Printf(`
+Legend:
+  r: replay
+  ?: hint
+  l: print this legend
+  n: next number
+  q: quit
+  0-9: digit
+`)
+	if len(curAnswer) > 0 {
+		fmt.Printf("%s%s", prompt, curAnswer)
 	}
 }

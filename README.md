@@ -15,6 +15,16 @@ Usage:
         no auto next number
 ```
 
+The following keys are used while playing the game.
+```shell
+Legend:
+  r: replay
+  ?: hint
+  l: print this legend
+  n: next number
+  q: quit
+  0-9: digit
+```
 ## LangPractice API
 ### Request
 URL: https://langpractice.com/api/newnumber/spanish-mexico/1/100/1000 - ".../1/min/max"
